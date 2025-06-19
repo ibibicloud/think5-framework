@@ -1139,9 +1139,6 @@ class Template
                 case 'NOW':
                     $parseStr = "date('Y-m-d g:i a',time())";
                     break;
-                case 'VERSION':
-                    $parseStr = 'app()->version()';
-                    break;
                 case 'LDELIM':
                     $parseStr = '\'' . ltrim($this->config['tpl_begin'], '\\') . '\'';
                     break;

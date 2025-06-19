@@ -11,8 +11,6 @@ use think\route\Dispatch;
  */
 class App extends Container
 {
-    const VERSION = '基于thinkphp=v5.1.42 LTS - ibibicloud';
-
     /**
      * 当前模块路径
      * @var string
@@ -282,40 +280,8 @@ class App extends Container
         }
 
         $this->setModulePath($path);
-
-        if ($module) {
-            // 对容器中的对象实例进行配置更新
-            $this->containerConfigUpdate($module);
-        }
     }
 
-    protected function containerConfigUpdate($module)
-    {
-        $config = $this->config->get();
-
-        // 注册异常处理类
-        if ($config['app']['exception_handle']) {
-            Error::setExceptionHandler($config['app']['exception_handle']);
-        }
-
-        Db::init($config['database']);
-        $this->middleware->setConfig($config['middleware']);
-        $this->route->setConfig($config['app']);
-        $this->request->init($config['app']);
-        $this->cookie->init($config['cookie']);
-        $this->view->init($config['template']);
-        $this->log->init($config['log']);
-        $this->session->setConfig($config['session']);
-        $this->debug->setConfig($config['trace']);
-        $this->cache->init($config['cache'], true);
-
-        // 模块请求缓存检查
-        $this->checkRequestCache(
-            $config['app']['request_cache'],
-            $config['app']['request_cache_expire'],
-            $config['app']['request_cache_except']
-        );
-    }
 
     /**
      * 执行应用程序
@@ -611,21 +577,6 @@ class App extends Container
     }
 
     /**
-     * 实例化（分层）模型
-     * @access public
-     * @param  string $name         Model名称
-     * @param  string $layer        业务层名称
-     * @param  bool   $appendSuffix 是否添加类名后缀
-     * @param  string $common       公共模块名
-     * @return Model
-     * @throws ClassNotFoundException
-     */
-    public function model($name = '', $layer = 'model', $appendSuffix = false, $common = 'common')
-    {
-        return $this->create($name, $layer, $appendSuffix, $common);
-    }
-
-    /**
      * 实例化（分层）控制器 格式：[模块名/]控制器名
      * @access public
      * @param  string $name              资源地址
@@ -649,67 +600,6 @@ class App extends Container
     }
 
     /**
-     * 实例化验证类 格式：[模块名/]验证器名
-     * @access public
-     * @param  string $name         资源地址
-     * @param  string $layer        验证层名称
-     * @param  bool   $appendSuffix 是否添加类名后缀
-     * @param  string $common       公共模块名
-     * @return Validate
-     * @throws ClassNotFoundException
-     */
-    public function validate($name = '', $layer = 'validate', $appendSuffix = false, $common = 'common')
-    {
-        $name = $name ?: $this->config('app.default_validate');
-
-        if (empty($name)) {
-            return new Validate;
-        }
-
-        return $this->create($name, $layer, $appendSuffix, $common);
-    }
-
-    /**
-     * 数据库初始化
-     * @access public
-     * @param  mixed         $config 数据库配置
-     * @param  bool|string   $name 连接标识 true 强制重新连接
-     * @return \think\db\Query
-     */
-    public function db($config = [], $name = false)
-    {
-        return Db::connect($config, $name);
-    }
-
-    /**
-     * 远程调用模块的操作方法 参数格式 [模块/控制器/]操作
-     * @access public
-     * @param  string       $url          调用地址
-     * @param  string|array $vars         调用参数 支持字符串和数组
-     * @param  string       $layer        要调用的控制层名称
-     * @param  bool         $appendSuffix 是否添加类名后缀
-     * @return mixed
-     * @throws ClassNotFoundException
-     */
-    public function action($url, $vars = [], $layer = 'controller', $appendSuffix = false)
-    {
-        $info   = pathinfo($url);
-        $action = $info['basename'];
-        $module = '.' != $info['dirname'] ? $info['dirname'] : $this->request->controller();
-        $class  = $this->controller($module, $layer, $appendSuffix);
-
-        if (is_scalar($vars)) {
-            if (strpos($vars, '=')) {
-                parse_str($vars, $vars);
-            } else {
-                $vars = [$vars];
-            }
-        }
-
-        return $this->invokeMethod([$class, $action . $this->config('app.action_suffix')], $vars);
-    }
-
-    /**
      * 解析应用类的类名
      * @access public
      * @param  string $module 模块名
@@ -726,16 +616,6 @@ class App extends Container
         $path  = $array ? implode('\\', $array) . '\\' : '';
 
         return $this->namespace . '\\' . ($module ? $module . '\\' : '') . $layer . '\\' . $path . $class;
-    }
-
-    /**
-     * 获取框架版本
-     * @access public
-     * @return string
-     */
-    public function version()
-    {
-        return static::VERSION;
     }
 
     /**

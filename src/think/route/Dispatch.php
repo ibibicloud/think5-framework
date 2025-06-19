@@ -103,11 +103,6 @@ abstract class Dispatch
             $this->app['middleware']->import($option['middleware']);
         }
 
-        // 绑定模型数据
-        if (!empty($option['model'])) {
-            $this->createBindModel($option['model'], $matches);
-        }
-
         // 指定Header数据
         if (!empty($option['header'])) {
             $header = $option['header'];
@@ -139,11 +134,6 @@ abstract class Dispatch
             if ($dispatch instanceof Response) {
                 return $dispatch;
             }
-        }
-
-        // 数据自动验证
-        if (isset($option['validate'])) {
-            $this->autoValidate($option['validate']);
         }
 
         $data = $this->exec();
@@ -193,43 +183,6 @@ abstract class Dispatch
     }
 
     /**
-     * 验证数据
-     * @access protected
-     * @param  array             $option
-     * @return void
-     * @throws ValidateException
-     */
-    protected function autoValidate($option)
-    {
-        list($validate, $scene, $message, $batch) = $option;
-
-        if (is_array($validate)) {
-            // 指定验证规则
-            $v = $this->app->validate();
-            $v->rule($validate);
-        } else {
-            // 调用验证器
-            $v = $this->app->validate($validate);
-            if (!empty($scene)) {
-                $v->scene($scene);
-            }
-        }
-
-        if (!empty($message)) {
-            $v->message($message);
-        }
-
-        // 批量验证
-        if ($batch) {
-            $v->batch(true);
-        }
-
-        if (!$v->check($this->request->param())) {
-            throw new ValidateException($v->getError());
-        }
-    }
-
-    /**
      * 处理路由请求缓存
      * @access protected
      * @param  Request       $request 请求对象
@@ -248,53 +201,6 @@ abstract class Dispatch
 
         $cache = $this->request->cache($key, $expire, $tag);
         $this->app->setResponseCache($cache);
-    }
-
-    /**
-     * 路由绑定模型实例
-     * @access protected
-     * @param  array|\Clousre    $bindModel 绑定模型
-     * @param  array             $matches   路由变量
-     * @return void
-     */
-    protected function createBindModel($bindModel, $matches)
-    {
-        foreach ($bindModel as $key => $val) {
-            if ($val instanceof \Closure) {
-                $result = $this->app->invokeFunction($val, $matches);
-            } else {
-                $fields = explode('&', $key);
-
-                if (is_array($val)) {
-                    list($model, $exception) = $val;
-                } else {
-                    $model     = $val;
-                    $exception = true;
-                }
-
-                $where = [];
-                $match = true;
-
-                foreach ($fields as $field) {
-                    if (!isset($matches[$field])) {
-                        $match = false;
-                        break;
-                    } else {
-                        $where[] = [$field, '=', $matches[$field]];
-                    }
-                }
-
-                if ($match) {
-                    $query  = strpos($model, '\\') ? $model::where($where) : $this->app->model($model)->where($where);
-                    $result = $query->failException($exception)->find();
-                }
-            }
-
-            if (!empty($result)) {
-                // 注入容器
-                $this->app->instance(get_class($result), $result);
-            }
-        }
     }
 
     public function convert($convert)
