@@ -1,12 +1,12 @@
 {
-    "name": "ibibicloud/think5-framework",
+    "name": "ibibicloud/tp5-framework",
     "license": "Apache-2.0",
     "require": {
         "php": ">=7.2.0",
         "ext-json": "*",
         "ext-mbstring": "*",
         "ext-curl": "*",
-        "ibibicloud/think5-container": "*"
+        "ibibicloud/tp5-container": "*"
     },
     "autoload": {
         "psr-4": {
