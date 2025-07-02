@@ -161,7 +161,7 @@ function session($name, $value = '', $prefix = null)
  */
 function db($name = '', $config = [], $force = true)
 {
-    return Db::connect($config, $force)->name($name);
+    return Db::connect(!empty($config) ? : config('database'), $force)->name($name);
 }
 
 /**
